@@ -1,0 +1,7 @@
+.wallets/
+
+# do not commit public key files, ie, addresses
+*.pk
+
+# do not commit secret key files, ie, signatures for addresses
+*.sk

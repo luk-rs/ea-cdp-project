@@ -1,0 +1,14 @@
+name = "cdp/hotels"
+version = "0.0.0"
+license = "Apache-2.0"
+description = "Aiken contracts for project 'cdp/hotels'"
+
+[repository]
+user = "cdp"
+project = "hotels"
+platform = "github"
+
+[[dependencies]]
+name = "aiken-lang/stdlib"
+version = "1.8.0"
+source = "github"
