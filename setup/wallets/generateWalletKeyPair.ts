@@ -1,6 +1,6 @@
 const walletName = Deno.args[0];
 
-import { Lucid } from "https://deno.land/x/lucid/mod.ts";
+import { Lucid } from "https://deno.land/x/lucid@0.10.7/mod.ts";
 import wallets from "./walletDirs.ts";
 
 const lucid = await Lucid.new(undefined, "Preview");
