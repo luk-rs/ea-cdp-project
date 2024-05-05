@@ -1,18 +1,16 @@
 use aiken/bytearray
 use aiken/dict
-use aiken/hash.{Blake2b_224, Hash}
 use aiken/interval
 use aiken/list
 use aiken/transaction.{
   InlineDatum, Mint, Output, ScriptContext, Transaction, TransactionId,
 }
 use aiken/transaction/credential.{
-  Address, VerificationKey, VerificationKeyCredential,
+  Address, VerificationKeyCredential,
 }
-use aiken/transaction/value.{from_lovelace, to_minted_value}
+use aiken/transaction/value.{ from_lovelace, to_minted_value }
+use hotels/common_types.{ VerificationKeyHash }
 
-type VerificationKeyHash =
-  Hash<Blake2b_224, VerificationKey>
 
 //100
 const housing_prefix = #"000643b0"

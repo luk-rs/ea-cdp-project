@@ -22,7 +22,7 @@ const hotel_owner_PKH = lucid
   .paymentCredential?.hash;
 
 //contracts
-const mintValidator = await readValidator("housing.mint", [hotel_owner_PKH]);
+const mintValidator = await readValidator("minting.mint", [hotel_owner_PKH]);
 
 //addresses/ids
 const mintPolicy = lucid.utils.mintingPolicyToId(mintValidator);
