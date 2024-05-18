@@ -6,9 +6,9 @@ import {
   fromText,
   toUnit,
 } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { toLovelaces } from "./kernel/lovelaces.ts";
-import { readValidator } from "./kernel/validators.ts";
-import { pkWallet, skWallet } from "./kernel/wallets.ts";
+import { toLovelaces } from "../kernel/lovelaces.ts";
+import { readValidator } from "../kernel/validators.ts";
+import { pkWallet, skWallet } from "../kernel/wallets.ts";
 
 // --- execution setup
 const blockfrostProjectId = Deno.env.get("BLOCKFROST_PROJECT_ID");
@@ -33,7 +33,9 @@ const available_utxos = hotel_owner_utxos.filter(
 );
 
 //contracts
-const mintValidator = await readValidator("draft_mint.mint", [hotel_owner_PKH]);
+const mintValidator = await readValidator("mint_validation.mint", [
+  hotel_owner_PKH,
+]);
 const holdingsValidator = await readValidator("holdings.hold", [
   hotel_owner_PKH,
 ]);
@@ -61,100 +63,85 @@ console.log({
   shareholdingAddress,
 });
 
-// --- execution outline
-
-try {
-  const initial_mint = await draft_mintHotel("HParqNg32", 1987);
-
-  await lucid.awaitTx(initial_mint);
-
-  console.log(`Transactions Split!
-    Tx Hash: ${initial_mint}
-    PolicyId ${mintPolicy}
-  `);
-} catch (error) {
-  console.error(error);
-}
-
 // --- Transactions
 
-function generateTokenWithPrefix(name: string, prefix: number) {
+function generateTokenWithPrefix(name: string, prefix: number, ref: string) {
   const tokenName = fromText(name);
 
-  const asset = toUnit(mintPolicy, tokenName, prefix);
+  const unit = toUnit(mintPolicy, tokenName, prefix);
+
   const metadata = {
-    name: `${prefix}${name}`,
+    name,
+    prefix,
+    description: `${name} -> ${ref} `,
     //QmTCjrd9ZsxAK7VG8SvFpx7FwHH5T34XdmM9kw6YiaqYwH //PNG
     //Qme9wQYifNqSrYYieCZAmFbm6YVh4oytHYcprpQaHyFy9W //JPG
     image: "QmTCjrd9ZsxAK7VG8SvFpx7FwHH5T34XdmM9kw6YiaqYwH",
+    mediaType: "image/png",
+    unit: toUnit(mintPolicy, tokenName, prefix),
   };
 
-  return { asset, metadata };
+  return { unit, metadata };
 }
 
-async function draft_mintHotel(name: string, sharesAmount: number) {
-  const hotelAsset = generateTokenWithPrefix(name, 100);
-  const shareAsset = generateTokenWithPrefix(name, 444);
+type draftParameters = {
+  name: string;
+  sharesAmount: number;
+};
 
-  // const referenceMetadata = {
-  //   name: `hotel '${name}'`,
-  //   description: `my '${name}' hotel`,
-  //   image: "Qme9wQYifNqSrYYieCZAmFbm6YVh4oytHYcprpQaHyFy9W",
-  //   mediaType: "image/jpeg",
-  // };
+export async function draft_mintHotel(mintParams: draftParameters) {
+  const { name, sharesAmount } = mintParams;
+  // const debugAddr =
+  //   "addr_test1qzmzk06xlh2gye5y5r8c55xu64cs8zr5clvjpqxtlz0nlyv5xsf7dtstuemkufpafjjjztf33wwrwt8plh77vjw8eswsha7szc";
+  const hotelToken = generateTokenWithPrefix(name, 100, "reference NFT");
+  const shareToken = generateTokenWithPrefix(name, 333, "share FT");
 
-  // const sharesMetadata = {
-  //   name: `shares '${name}'`,
-  //   description: `my '${name}' hotel shares`,
-  //   image: "QmTCjrd9ZsxAK7VG8SvFpx7FwHH5T34XdmM9kw6YiaqYwH",
-  //   decimals: 2,
-  // };
-
-  const redeemer = Data.to(new Constr(0, []));
+  const redeemer_ = {
+    name: fromText(name),
+    shares: BigInt(sharesAmount),
+  };
+  const redeemer = Data.to(new Constr(0, [redeemer_.name, redeemer_.shares]));
+  // const redeemer = Data.to(new Constr(0, [Data.fromJson(redeemer_)]));
 
   const tx = await lucid
     .newTx()
     .mintAssets(
       {
-        [hotelAsset.asset]: 1n,
-        [shareAsset.asset]: BigInt(sharesAmount), //CIP 68
+        [hotelToken.unit]: 1n,
+        [shareToken.unit]: BigInt(sharesAmount), //CIP 68
       },
       redeemer
     )
     .attachMintingPolicy(mintValidator)
-    // .payToContract(
-    //   holdingsAddress,
-    .payToAddressWithData(
-      "addr_test1qrskd4s3a7fdcvw5nh46y7znzryt8mwqsyz852sj2gv2nk3vs0x0tqxtf3v2pgd5xlghyc9e9ypmvhdaqdr9ks553f9qrg6y0h",
+    .payToContract(
+      holdingsAddress,
+      // .payToAddressWithData(
+      //   debugAddr,
       {
         inline: Data.to(
           new Constr(0, [
-            Data.fromJson({
-              // ...hotelAsset.metadata,
-            }),
-            1n,
-            new Constr(0, []),
-          ])
-        ),
-      },
-      { [hotelAsset.asset]: 1n }
-    )
-    // .payToContract(
-    //   shareholdingAddress,
-    .payToAddressWithData(
-      "addr_test1qrskd4s3a7fdcvw5nh46y7znzryt8mwqsyz852sj2gv2nk3vs0x0tqxtf3v2pgd5xlghyc9e9ypmvhdaqdr9ks553f9qrg6y0h",
-      {
-        inline: Data.to(
-          new Constr(0, [
-            Data.fromJson({
-              //todo replace with metadat
-            }),
+            Data.fromJson(hotelToken.metadata),
             2n,
             new Constr(0, []),
           ])
         ),
       },
-      { [hotelAsset.asset]: BigInt(sharesAmount) }
+      { [hotelToken.unit]: 1n }
+    )
+    .payToContract(
+      shareholdingAddress,
+      // .payToAddressWithData(
+      //   debugAddr,
+      {
+        inline: Data.to(
+          new Constr(0, [
+            Data.fromJson(shareToken.metadata),
+            2n,
+            new Constr(0, []),
+          ])
+        ),
+      },
+      { [shareToken.unit]: BigInt(sharesAmount) }
     )
     // .payToAddress(treasury.address, { lovelace: treasury.fees.mint }) //this would be the treasury fees if implemented
     .addSignerKey(hotel_owner_PKH!)
@@ -162,5 +149,5 @@ async function draft_mintHotel(name: string, sharesAmount: number) {
 
   const signed = await tx.sign().complete();
 
-  return signed.submit();
+  return { tx: signed.submit(), mintPolicy };
 }
