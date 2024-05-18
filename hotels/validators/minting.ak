@@ -5,12 +5,9 @@ use aiken/list
 use aiken/transaction.{
   InlineDatum, Mint, Output, ScriptContext, Transaction, TransactionId,
 }
-use aiken/transaction/credential.{
-  Address, VerificationKeyCredential,
-}
-use aiken/transaction/value.{ from_lovelace, to_minted_value }
-use hotels/common_types.{ VerificationKeyHash }
-
+use aiken/transaction/credential.{Address, VerificationKeyCredential}
+use aiken/transaction/value.{from_lovelace, to_minted_value}
+use hotels/kernel.{VerificationKeyHash}
 
 //100
 const housing_prefix = #"000643b0"

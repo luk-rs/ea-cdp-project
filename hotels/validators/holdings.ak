@@ -3,7 +3,7 @@ use aiken/transaction.{ScriptContext}
 use hotels/kernel.{VerificationKeyHash}
 
 validator(owner_pkh: VerificationKeyHash) {
-  fn stake(_d: Data, _r: Data, _ctx: ScriptContext) {
+  fn hold(_d: Data, _r: Data, _ctx: ScriptContext) {
     True
   }
 }
