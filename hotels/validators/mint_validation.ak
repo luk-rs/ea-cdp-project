@@ -52,6 +52,7 @@ validator(owner: VerificationKeyHash) {
 
         //? another is the distribution contract of the owner
         let shares_ft_expected_name = build_name(name, shares_prefix)
+
         expect shares_ft_name == shares_ft_expected_name
         expect Some(shares_ft_output) =
           list.find(
@@ -77,7 +78,7 @@ validator(owner: VerificationKeyHash) {
 const housing_prefix = #"000643b0"
 
 //* (333)
-const shares_prefix = #"001bc280"
+const shares_prefix = #"0014df10"
 
 fn build_name(name: ByteArray, prefix: ByteArray) -> ByteArray {
   let token_name: value.AssetName = name

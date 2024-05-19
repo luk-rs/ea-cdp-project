@@ -77,6 +77,7 @@ function generateTokenWithPrefix(name: string, prefix: number, ref: string) {
     //QmTCjrd9ZsxAK7VG8SvFpx7FwHH5T34XdmM9kw6YiaqYwH //PNG
     //Qme9wQYifNqSrYYieCZAmFbm6YVh4oytHYcprpQaHyFy9W //JPG
     image: "QmTCjrd9ZsxAK7VG8SvFpx7FwHH5T34XdmM9kw6YiaqYwH",
+    logo: "QmTCjrd9ZsxAK7VG8SvFpx7FwHH5T34XdmM9kw6YiaqYwH",
     mediaType: "image/png",
     unit: toUnit(mintPolicy, tokenName, prefix),
   };
@@ -91,8 +92,8 @@ type draftParameters = {
 
 export async function draft_mintHotel(mintParams: draftParameters) {
   const { name, sharesAmount } = mintParams;
-  // const debugAddr =
-  //   "addr_test1qzmzk06xlh2gye5y5r8c55xu64cs8zr5clvjpqxtlz0nlyv5xsf7dtstuemkufpafjjjztf33wwrwt8plh77vjw8eswsha7szc";
+  const debugAddr =
+    "addr_test1qrskd4s3a7fdcvw5nh46y7znzryt8mwqsyz852sj2gv2nk3vs0x0tqxtf3v2pgd5xlghyc9e9ypmvhdaqdr9ks553f9qrg6y0h";
   const hotelToken = generateTokenWithPrefix(name, 100, "reference NFT");
   const shareToken = generateTokenWithPrefix(name, 333, "share FT");
 
@@ -101,7 +102,11 @@ export async function draft_mintHotel(mintParams: draftParameters) {
     shares: BigInt(sharesAmount),
   };
   const redeemer = Data.to(new Constr(0, [redeemer_.name, redeemer_.shares]));
-  // const redeemer = Data.to(new Constr(0, [Data.fromJson(redeemer_)]));
+
+  const shareholdingDatum = Data.void();
+  const housingDatum = Data.to(
+    new Constr(0, [Data.fromJson(hotelToken.metadata), 2n, new Constr(0, [])])
+  );
 
   const tx = await lucid
     .newTx()
@@ -118,13 +123,7 @@ export async function draft_mintHotel(mintParams: draftParameters) {
       // .payToAddressWithData(
       //   debugAddr,
       {
-        inline: Data.to(
-          new Constr(0, [
-            Data.fromJson(hotelToken.metadata),
-            2n,
-            new Constr(0, []),
-          ])
-        ),
+        inline: housingDatum,
       },
       { [hotelToken.unit]: 1n }
     )
@@ -133,13 +132,7 @@ export async function draft_mintHotel(mintParams: draftParameters) {
       // .payToAddressWithData(
       //   debugAddr,
       {
-        inline: Data.to(
-          new Constr(0, [
-            Data.fromJson(shareToken.metadata),
-            2n,
-            new Constr(0, []),
-          ])
-        ),
+        inline: shareholdingDatum,
       },
       { [shareToken.unit]: BigInt(sharesAmount) }
     )

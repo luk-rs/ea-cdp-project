@@ -15,6 +15,10 @@ const housing_prefix = #"000643b0"
 //444
 const shares_prefix = #"001bc280"
 
+//0014df10
+
+//0014df105
+
 const housing_addr = #"12cba7cbc00000631cc3e2fecb006824a3085e69dd8f112c9dc7fd4b"
 
 const shareholders_addr =
