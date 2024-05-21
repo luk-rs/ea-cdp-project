@@ -1,16 +1,31 @@
-use aiken.{Data}
 use aiken/transaction.{ScriptContext}
-use hotels/kernel.{VerificationKeyHash}
+use hotels/datum.{ShareholdingDatum}
+use hotels/kernel.{VerificationKeyHash, txSignedBy}
 
-type ShareholdingDatum {
-  share_cost: Int,
-  total_shares: Int,
+type ShareholdingRedeemer {
+  Mint { amount: Int }
+  Buy { amount: Int }
+  Return
 }
 
-validator(owner_pkh: VerificationKeyHash) {
-  fn stake(datum: ShareholdingDatum, _r: Data, _ctx: ScriptContext) {
-    expect ShareholdingDatum(share_cost, total_shares) = datum
+validator(buyer_pkh: VerificationKeyHash) {
+  fn stake(
+    datum: ShareholdingDatum,
+    redeemer: ShareholdingRedeemer,
+    ctx: ScriptContext,
+  ) {
+    let ScriptContext { transaction, purpose } = ctx
 
-    True
+    expect txSignedBy(transaction, buyer_pkh)
+
+    expect ShareholdingDatum(num_shares, share) = datum
+
+    expect txSignedBy(transaction, buyer_pkh)
+
+    when redeemer is {
+      Mint(amount) -> True
+      Buy(amount) -> True
+      Return -> False
+    }
   }
 }

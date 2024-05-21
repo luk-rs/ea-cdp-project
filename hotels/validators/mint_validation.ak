@@ -1,12 +1,19 @@
 use aiken/bytearray
 use aiken/dict
 use aiken/list
-use aiken/transaction.{Mint, ScriptContext, Transaction}
+use aiken/transaction.{InlineDatum, Mint, ScriptContext, Transaction}
 use aiken/transaction/value
-use hotels/kernel.{VerificationKeyHash}
+use hotels/datum.{HoldingsDatum, ShareholdingDatum}
+use hotels/kernel.{VerificationKeyHash, txSignedBy}
 
 type Minting {
-  Forge { name: ByteArray, shares: Int }
+  Forge {
+    name: ByteArray,
+    shares: Int,
+    share_cost: Int,
+    cost_per_night: Int,
+    profitablity_share: Int,
+  }
   Burn
 }
 
@@ -23,7 +30,7 @@ validator(owner: VerificationKeyHash) {
     expect txSignedBy(transaction, owner)
 
     when reedemer is {
-      Forge(name, shares) -> {
+      Forge(name, shares, share_cost, cost_per_night, profitablity_share) -> {
         //! there are only two items being minted
         expect [
           (ref_nft_name, ref_nft_amount),
@@ -50,6 +57,11 @@ validator(owner: VerificationKeyHash) {
             },
           )
 
+        expect InlineDatum(inline_datum) = ref_nft_output.datum
+        expect datum: HoldingsDatum = inline_datum
+
+        expect
+          datum.shares_amount == shares && datum.share_cost == share_cost && datum.profitablity_share == profitablity_share && datum.cost_per_night == cost_per_night
         //? another is the distribution contract of the owner
         let shares_ft_expected_name = build_name(name, shares_prefix)
 
@@ -62,8 +74,14 @@ validator(owner: VerificationKeyHash) {
             },
           )
 
+        expect InlineDatum(inline_datum) = shares_ft_output.datum
+        expect datum: ShareholdingDatum = inline_datum
+
+        expect datum.num_shares == shares && datum.share == 100
+
         //! ensure these outputs go to different contracts
         expect ref_nft_output.address != shares_ft_output.address
+
         True
       }
       Burn -> True
@@ -83,10 +101,6 @@ const shares_prefix = #"0014df10"
 fn build_name(name: ByteArray, prefix: ByteArray) -> ByteArray {
   let token_name: value.AssetName = name
   bytearray.concat(prefix, token_name)
-}
-
-fn txSignedBy(tx: Transaction, who: VerificationKeyHash) -> Bool {
-  list.has(tx.extra_signatories, who)
 }
 
 //********************************

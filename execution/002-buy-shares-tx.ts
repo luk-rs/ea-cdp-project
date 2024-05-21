@@ -1,5 +1,5 @@
 import { Blockfrost, Lucid } from "https://deno.land/x/lucid@0.10.7/mod.ts";
-import { draft_mintHotel } from "./tx_definitions/mint-tokens.ts";
+import { draft_buyShares } from "./tx_definitions/buy-shares.ts";
 
 // --- execution setup
 const blockfrostProjectId = Deno.env.get("BLOCKFROST_PROJECT_ID");
@@ -13,19 +13,15 @@ const lucid = await Lucid.new(
 
 // --- execution outline
 
-const mint_tx_definition = await draft_mintHotel({
-  name: `teste1Domingo`,
-  sharesAmount: 1987,
-  shareCost: 100,
-  costPerNight: 10,
-  profitabilityShare: 40,
+const buy_shares_tx_definition = await draft_buyShares({
+  name: "teste1Domingo",
+  shares: 100,
 });
 
-const tx = await mint_tx_definition.tx;
+const tx = await buy_shares_tx_definition.tx;
 
 await lucid.awaitTx(tx);
 
 console.log(`Transactions Split!
     Tx Hash: ${tx}
-    PolicyId ${mint_tx_definition.mintPolicy}
   `);

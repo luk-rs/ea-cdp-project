@@ -88,24 +88,43 @@ function generateTokenWithPrefix(name: string, prefix: number, ref: string) {
 type draftParameters = {
   name: string;
   sharesAmount: number;
+  shareCost: number;
+  costPerNight: number;
+  profitabilityShare: number;
 };
 
 export async function draft_mintHotel(mintParams: draftParameters) {
-  const { name, sharesAmount } = mintParams;
-  const debugAddr =
-    "addr_test1qrskd4s3a7fdcvw5nh46y7znzryt8mwqsyz852sj2gv2nk3vs0x0tqxtf3v2pgd5xlghyc9e9ypmvhdaqdr9ks553f9qrg6y0h";
+  const { name, sharesAmount, shareCost, costPerNight, profitabilityShare } =
+    mintParams;
+  // const debugAddr =
+  //   "addr_test1qrskd4s3a7fdcvw5nh46y7znzryt8mwqsyz852sj2gv2nk3vs0x0tqxtf3v2pgd5xlghyc9e9ypmvhdaqdr9ks553f9qrg6y0h";
   const hotelToken = generateTokenWithPrefix(name, 100, "reference NFT");
   const shareToken = generateTokenWithPrefix(name, 333, "share FT");
 
-  const redeemer_ = {
-    name: fromText(name),
-    shares: BigInt(sharesAmount),
-  };
-  const redeemer = Data.to(new Constr(0, [redeemer_.name, redeemer_.shares]));
+  const redeemer = Data.to(
+    new Constr(0, [
+      fromText(name),
+      BigInt(sharesAmount),
+      BigInt(shareCost),
+      BigInt(costPerNight),
+      BigInt(profitabilityShare),
+    ])
+  );
 
-  const shareholdingDatum = Data.void();
-  const housingDatum = Data.to(
-    new Constr(0, [Data.fromJson(hotelToken.metadata), 2n, new Constr(0, [])])
+  const shareholdingDatum = Data.to(
+    new Constr(0, [BigInt(sharesAmount), BigInt(100)])
+  );
+
+  // const housingDatum = Data.to(
+  //   new Constr(0, [Data.fromJson(hotelToken.metadata), 2n, new Constr(0, [])])
+  // );
+  const holdingsDatum = Data.to(
+    new Constr(0, [
+      BigInt(sharesAmount),
+      BigInt(shareCost),
+      BigInt(profitabilityShare),
+      BigInt(costPerNight),
+    ])
   );
 
   const tx = await lucid
@@ -123,7 +142,7 @@ export async function draft_mintHotel(mintParams: draftParameters) {
       // .payToAddressWithData(
       //   debugAddr,
       {
-        inline: housingDatum,
+        inline: holdingsDatum,
       },
       { [hotelToken.unit]: 1n }
     )
