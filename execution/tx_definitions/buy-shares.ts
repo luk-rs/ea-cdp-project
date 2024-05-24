@@ -70,11 +70,6 @@ type draftParameters = {
   shares: number;
 };
 
-type refAssetDatum = {
-  shareCost: number;
-  sharesAmount: number;
-};
-
 export async function draft_buyShares(buyParams: draftParameters) {
   const { name, shares } = buyParams;
   const tokenName = fromText(name);
@@ -88,13 +83,11 @@ export async function draft_buyShares(buyParams: draftParameters) {
   const hotel_utxo_ref = owner_hotel_utxos[0];
   const raw_hotel_datum: Constr<Data> = Data.from(hotel_utxo_ref.datum!);
 
-  console.log("DEBUG1", owner_hotelAddress, owner_hotel_utxos);
   const shares_utxos = await lucid.utxosAt(owner_shareholdingAddress);
   const owner_shares_utxos = shares_utxos.filter((u) => {
     const shareDatum: Constr<Data> = Data.from(u.datum!);
     return shareDatum.fields[3] == hotel_owner_PKH;
   });
-  console.log("DEBUG2", owner_shareholdingAddress, owner_shares_utxos);
   const raw_shares_Datum: Constr<Data> = Data.from(
     owner_shares_utxos[0].datum!
   ); //! I'm assuming only one owner utxo even though i'm not actually always ensuring that consolidation
