@@ -3,7 +3,7 @@
 deno run --allow-read --allow-write ./setup/wallets/generateWalletsDir.ts
 
 # generate treasury wallet
-deno run --allow-net --allow-write ./setup/wallets/generateWalletKeyPair.ts treasury
+# deno run --allow-net --allow-write ./setup/wallets/generateWalletKeyPair.ts treasury
 
 # generate hotel owner wallet
 deno run --allow-net --allow-write ./setup/wallets/generateWalletKeyPair.ts hotel_owner
@@ -15,4 +15,4 @@ deno run --allow-net --allow-write ./setup/wallets/generateWalletKeyPair.ts shar
 deno run --allow-net --allow-write ./setup/wallets/generateWalletKeyPair.ts share_holder_4
 
 # generate renter wallet
-deno run --allow-net --allow-write ./setup/wallets/generateWalletKeyPair.ts renter
+# deno run --allow-net --allow-write ./setup/wallets/generateWalletKeyPair.ts renter
