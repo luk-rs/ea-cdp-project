@@ -7,10 +7,10 @@ type HoldingRedeemer {
   Burn
 }
 
-validator(owner_pkh: VerificationKeyHash) {
+validator(_owner_pkh: VerificationKeyHash) {
   fn hold(_d: HoldingsDatum, redeemer: HoldingRedeemer, _ctx: ScriptContext) {
     when redeemer is {
-      Mint(name) -> True
+      Mint(_name) -> True
       Burn -> False
     }
   }

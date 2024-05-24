@@ -22,7 +22,7 @@ validator(owner_pkh: VerificationKeyHash, mint_policy: PolicyId) {
     expect Spend(_) = purpose
 
     //! it has the correct datum attached
-    let ShareholdingDatum(num_shares, share_cost, share, shares_owner) = datum
+    let ShareholdingDatum(num_shares, share_cost, _share, shares_owner) = datum
 
     when redeemer is {
       Buy(amount, buyer, name) -> {

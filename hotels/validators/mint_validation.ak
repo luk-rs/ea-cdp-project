@@ -1,4 +1,3 @@
-use aiken/bytearray
 use aiken/dict
 use aiken/list
 use aiken/transaction.{InlineDatum, Mint, ScriptContext, Transaction}
