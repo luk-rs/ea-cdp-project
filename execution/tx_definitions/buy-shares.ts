@@ -24,12 +24,6 @@ const hotel_owner_addr = lucid
   .selectWalletFromPrivateKey(await Deno.readTextFile(skWallet("hotel_owner")))
   .utils.getAddressDetails(await Deno.readTextFile(pkWallet("hotel_owner")));
 const hotel_owner_PKH = hotel_owner_addr.paymentCredential?.hash;
-const buyer_addr = lucid
-  .selectWalletFromPrivateKey(
-    await Deno.readTextFile(skWallet("share_holder_1"))
-  )
-  .utils.getAddressDetails(await Deno.readTextFile(pkWallet("share_holder_1")));
-const buyer_PKH = buyer_addr.paymentCredential?.hash;
 
 //contracts
 const mintValidator = await readValidator("mint_validation.mint", [
@@ -50,31 +44,25 @@ const owner_shareholdingAddress = lucid.utils.validatorToAddress(
   owner_shareholdingValidator
 );
 
-//owner shareholding utxo
-
-console.log({
-  owner: {
-    pkh: hotel_owner_PKH,
-    addr: hotel_owner_addr.address.bech32,
-  },
-  buyer: {
-    pkh: buyer_PKH,
-    addr: buyer_addr.address.bech32,
-  },
-  owner_shareholdingAddress,
-});
-
 // --- Transactions
 type draftParameters = {
   name: string;
   shares: number;
+  buyer: string;
 };
 
 export async function draft_buyShares(buyParams: draftParameters) {
-  const { name, shares } = buyParams;
+  const { name, shares, buyer } = buyParams;
   const tokenName = fromText(name);
   const ref_asset = toUnit(mintPolicy, tokenName, 100);
   const share_asset = toUnit(mintPolicy, tokenName, 333);
+
+  const buyer_addr = lucid
+    .selectWalletFromPrivateKey(await Deno.readTextFile(skWallet(buyer)))
+    .utils.getAddressDetails(
+      await Deno.readTextFile(pkWallet("share_holder_1"))
+    );
+  const buyer_PKH = buyer_addr.paymentCredential?.hash;
 
   const owner_hotel_utxos = await lucid.utxosAtWithUnit(
     owner_hotelAddress,
@@ -156,5 +144,9 @@ export async function draft_buyShares(buyParams: draftParameters) {
 
   const signed = await tx.sign().complete();
 
-  return { tx: signed.submit() };
+  return {
+    tx: signed.submit(),
+    buyer,
+    sharesAddress: owner_shareholdingAddress,
+  };
 }

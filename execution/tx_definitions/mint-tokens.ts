@@ -51,19 +51,6 @@ const shareholdingAddress = lucid.utils.validatorToAddress(
   shareholdingValidator
 );
 
-console.log({
-  mint_policy: mintPolicy,
-  mint_policy_hex: fromText(mintPolicy),
-  owner: {
-    pkh: hotel_owner_PKH,
-    addr: hotel_owner_addr.address.bech32,
-    collateral: collateral_utxo,
-    available: available_utxos.length,
-  },
-  holdingsAddress,
-  shareholdingAddress,
-});
-
 // --- Transactions
 
 function generateTokenWithPrefix(name: string, prefix: number, ref: string) {
@@ -167,5 +154,10 @@ export async function draft_mintHotel(mintParams: draftParameters) {
 
   const signed = await tx.sign().complete();
 
-  return { tx: signed.submit(), mintPolicy };
+  return {
+    tx: signed.submit(),
+    mintPolicy,
+    holdingsAddress,
+    owner: hotel_owner_addr.address.bech32,
+  };
 }
