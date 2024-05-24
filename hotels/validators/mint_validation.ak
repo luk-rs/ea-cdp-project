@@ -4,7 +4,9 @@ use aiken/list
 use aiken/transaction.{InlineDatum, Mint, ScriptContext, Transaction}
 use aiken/transaction/value
 use hotels/datum.{HoldingsDatum, ShareholdingDatum}
-use hotels/kernel.{VerificationKeyHash, txSignedBy}
+use hotels/kernel.{
+  VerificationKeyHash, build_name, housing_prefix, shares_prefix, txSignedBy,
+}
 
 type Minting {
   Forge {
@@ -77,30 +79,20 @@ validator(owner: VerificationKeyHash) {
         expect InlineDatum(inline_datum) = shares_ft_output.datum
         expect datum: ShareholdingDatum = inline_datum
 
-        expect datum.num_shares == shares && datum.share == 100
+        expect
+          datum.num_shares == shares && datum.share == 100 && datum.owner == owner
 
         //! ensure these outputs go to different contracts
         expect ref_nft_output.address != shares_ft_output.address
 
         True
       }
+
+      //todo not implemented at all but the idea is to only allow burn if owner is the holder of all tokens
+      //todo so this means if he has sold some shares he has to buy them back in order to be able to burn the collection
       Burn -> True
     }
   }
-}
-
-//********************************
-//* Helpers
-//********************************
-//* (100)
-const housing_prefix = #"000643b0"
-
-//* (333)
-const shares_prefix = #"0014df10"
-
-fn build_name(name: ByteArray, prefix: ByteArray) -> ByteArray {
-  let token_name: value.AssetName = name
-  bytearray.concat(prefix, token_name)
 }
 
 //********************************

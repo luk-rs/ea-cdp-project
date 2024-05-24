@@ -2,11 +2,11 @@ use hotels/kernel.{VerificationKeyHash}
 
 pub type ShareholdingDatum {
   num_shares: Int,
+  share_cost: Int,
   // [0-100] %
   share: Int,
+  owner: VerificationKeyHash,
 }
-
-// owner: VerificationKeyHash,
 
 pub type HoldingsDatum {
   shares_amount: Int,

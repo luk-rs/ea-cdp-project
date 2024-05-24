@@ -39,12 +39,13 @@ const mintValidator = await readValidator("mint_validation.mint", [
 const holdingsValidator = await readValidator("holdings.hold", [
   hotel_owner_PKH,
 ]);
+const mintPolicy = lucid.utils.mintingPolicyToId(mintValidator);
 const shareholdingValidator = await readValidator("shareholding.stake", [
   hotel_owner_PKH,
+  mintPolicy,
 ]);
 
 //addresses/ids
-const mintPolicy = lucid.utils.mintingPolicyToId(mintValidator);
 const holdingsAddress = lucid.utils.validatorToAddress(holdingsValidator);
 const shareholdingAddress = lucid.utils.validatorToAddress(
   shareholdingValidator
@@ -112,7 +113,12 @@ export async function draft_mintHotel(mintParams: draftParameters) {
   );
 
   const shareholdingDatum = Data.to(
-    new Constr(0, [BigInt(sharesAmount), BigInt(100)])
+    new Constr(0, [
+      BigInt(sharesAmount),
+      BigInt(shareCost),
+      BigInt(100),
+      hotel_owner_PKH!,
+    ])
   );
 
   // const housingDatum = Data.to(

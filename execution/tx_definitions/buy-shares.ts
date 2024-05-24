@@ -29,7 +29,7 @@ const buyer_addr = lucid
     await Deno.readTextFile(skWallet("share_holder_1"))
   )
   .utils.getAddressDetails(await Deno.readTextFile(pkWallet("share_holder_1")));
-const buyer_PKH = hotel_owner_addr.paymentCredential?.hash;
+const buyer_PKH = buyer_addr.paymentCredential?.hash;
 
 //contracts
 const mintValidator = await readValidator("mint_validation.mint", [
@@ -38,21 +38,16 @@ const mintValidator = await readValidator("mint_validation.mint", [
 const owner_hotelValidator = await readValidator("holdings.hold", [
   hotel_owner_PKH,
 ]);
+const mintPolicy = lucid.utils.mintingPolicyToId(mintValidator);
 const owner_shareholdingValidator = await readValidator("shareholding.stake", [
   hotel_owner_PKH,
-]);
-const buyer_shareholdingValidator = await readValidator("shareholding.stake", [
-  buyer_PKH,
+  mintPolicy,
 ]);
 
 //addresses/ids
-const mintPolicy = lucid.utils.mintingPolicyToId(mintValidator);
 const owner_hotelAddress = lucid.utils.validatorToAddress(owner_hotelValidator);
 const owner_shareholdingAddress = lucid.utils.validatorToAddress(
   owner_shareholdingValidator
-);
-const buyer_shareholdingAddress = lucid.utils.validatorToAddress(
-  buyer_shareholdingValidator
 );
 
 //owner shareholding utxo
@@ -66,7 +61,7 @@ console.log({
     pkh: buyer_PKH,
     addr: buyer_addr.address.bech32,
   },
-  buyer_shareholdingAddress,
+  owner_shareholdingAddress,
 });
 
 // --- Transactions
@@ -87,56 +82,84 @@ export async function draft_buyShares(buyParams: draftParameters) {
   const share_asset = toUnit(mintPolicy, tokenName, 333);
 
   const owner_hotel_utxos = await lucid.utxosAtWithUnit(
-    owner_shareholdingAddress,
+    owner_hotelAddress,
     ref_asset
   );
-  const raw_hotel_datum: Constr<Data> = Data.from(
-    (await lucid.utxosAt(owner_shareholdingAddress))[0].datum!
+  const hotel_utxo_ref = owner_hotel_utxos[0];
+  const raw_hotel_datum: Constr<Data> = Data.from(hotel_utxo_ref.datum!);
+
+  console.log("DEBUG1", owner_hotelAddress, owner_hotel_utxos);
+  const shares_utxos = await lucid.utxosAt(owner_shareholdingAddress);
+  const owner_shares_utxos = shares_utxos.filter((u) => {
+    const shareDatum: Constr<Data> = Data.from(u.datum!);
+    return shareDatum.fields[3] == hotel_owner_PKH;
+  });
+  console.log("DEBUG2", owner_shareholdingAddress, owner_shares_utxos);
+  const raw_shares_Datum: Constr<Data> = Data.from(
+    owner_shares_utxos[0].datum!
+  ); //! I'm assuming only one owner utxo even though i'm not actually always ensuring that consolidation
+
+  const shareCost = raw_hotel_datum.fields[1] as bigint;
+  const previousShares = raw_shares_Datum.fields[0] as bigint;
+  const boughtShares = BigInt(shares);
+  const allShares = raw_hotel_datum.fields[0] as bigint;
+
+  const buyer_utxos = (await lucid.utxosAt(buyer_addr.address.bech32)).filter(
+    (u) => u.assets.lovelace > toLovelaces(boughtShares * shareCost)
   );
-  const shareCost = Number(raw_hotel_datum.fields[0]);
-  const totalShares = Number(raw_hotel_datum.fields[0]);
-  console.log({ shareCost, totalShares }); //todo cleanup
 
-  const previousShares = 0;
+  const userDatum = new Constr(0, [
+    boughtShares,
+    shareCost,
+    boughtShares / allShares,
+    buyer_PKH!,
+  ]);
+  const ownerUpdatedDatum = new Constr(0, [
+    previousShares - boughtShares,
+    shareCost,
+    (previousShares - boughtShares) / allShares,
+    hotel_owner_PKH!,
+  ]);
+  const redeemerContent = new Constr(0, [boughtShares, buyer_PKH!, tokenName]);
 
-  console.log(
-    owner_shareholdingAddress,
-    owner_hotel_utxos,
-    owner_hotel_utxos.length
-  );
+  const user_shareholding_datum = Data.to(userDatum);
+  const owner_updated_shareholdingDatum = Data.to(ownerUpdatedDatum);
 
-  const user_shareholding_datum = Data.to(new Constr(0, [])); //todo complete
-  const owner_updated_shareholdingDatum = Data.to(new Constr(0, [])); //todo complete
-
-  const redeemer = Data.void(); //todo complete
+  const redeemer = Data.to(redeemerContent);
 
   const tx = await lucid
     .newTx()
-    .collectFrom(owner_hotel_utxos, redeemer)
-    .attachSpendingValidator(buyer_shareholdingValidator)
+    .collectFrom([...buyer_utxos, ...owner_shares_utxos], redeemer)
+    .attachSpendingValidator(owner_shareholdingValidator)
     .payToContract(
       owner_hotelAddress,
       {
         inline: Data.to(raw_hotel_datum),
       },
       {
-        lovelace: toLovelaces(BigInt(shares * shareCost)),
+        lovelace: toLovelaces(boughtShares * shareCost),
       }
     )
     .payToContract(
       owner_shareholdingAddress,
-      { inline: owner_updated_shareholdingDatum },
-      { [share_asset]: BigInt(previousShares - shares) }
+      {
+        inline: owner_updated_shareholdingDatum,
+      },
+      { [share_asset]: previousShares - boughtShares }
     )
     .payToContract(
-      buyer_shareholdingAddress,
+      owner_shareholdingAddress,
       { inline: user_shareholding_datum },
       {
         [share_asset]: BigInt(shares),
       }
     )
     .addSignerKey(buyer_PKH!)
-    .complete();
+    .complete({
+      change: {
+        address: buyer_addr.address.bech32,
+      },
+    });
 
   const signed = await tx.sign().complete();
 

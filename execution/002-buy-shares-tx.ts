@@ -1,4 +1,5 @@
 import { Blockfrost, Lucid } from "https://deno.land/x/lucid@0.10.7/mod.ts";
+import { currentToken } from "./000-consts.ts";
 import { draft_buyShares } from "./tx_definitions/buy-shares.ts";
 
 // --- execution setup
@@ -14,14 +15,14 @@ const lucid = await Lucid.new(
 // --- execution outline
 
 const buy_shares_tx_definition = await draft_buyShares({
-  name: "teste1Domingo",
-  shares: 100,
+  name: currentToken,
+  shares: 10,
 });
 
 const tx = await buy_shares_tx_definition.tx;
 
 await lucid.awaitTx(tx);
 
-console.log(`Transactions Split!
+console.log(`Buy Transactions Split!
     Tx Hash: ${tx}
   `);
