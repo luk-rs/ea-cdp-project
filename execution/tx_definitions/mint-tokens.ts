@@ -108,9 +108,6 @@ export async function draft_mintHotel(mintParams: draftParameters) {
     ])
   );
 
-  // const housingDatum = Data.to(
-  //   new Constr(0, [Data.fromJson(hotelToken.metadata), 2n, new Constr(0, [])])
-  // );
   const holdingsDatum = Data.to(
     new Constr(0, [
       BigInt(sharesAmount),
@@ -120,6 +117,7 @@ export async function draft_mintHotel(mintParams: draftParameters) {
     ])
   );
 
+  console.log("preparing tx");
   const tx = await lucid
     .newTx()
     .mintAssets(
@@ -152,12 +150,15 @@ export async function draft_mintHotel(mintParams: draftParameters) {
     .addSignerKey(hotel_owner_PKH!)
     .complete();
 
+  console.log("signing tx");
   const signed = await tx.sign().complete();
 
+  console.log("submitting tx");
   return {
     tx: signed.submit(),
     mintPolicy,
     holdingsAddress,
+    shareholdingAddress,
     owner: hotel_owner_addr.address.bech32,
   };
 }

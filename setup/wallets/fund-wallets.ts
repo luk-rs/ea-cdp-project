@@ -23,11 +23,17 @@ console.log("selected wallet", fundsAddr);
 
 const wallets: string[] = [];
 for (const entry of Deno.readDirSync(walletDirs.addresses)) {
+  console.log(entry.name, faucetWallet, entry.name.startsWith(faucetWallet));
   if (entry.name.startsWith(faucetWallet)) continue;
-  console.log(entry.name);
 
-  const addr = await Deno.readTextFile(pkWallet("hotel_owner"));
+  const addr = await Deno.readTextFile(
+    pkWallet(entry.name.slice(0, entry.name.length - 3))
+  );
 
+  console.log({
+    name: entry.name,
+    addr,
+  });
   wallets.push(addr);
 }
 
@@ -39,9 +45,11 @@ await lucid.awaitTx(tx);
 //* HELPERS               /
 //************************/
 async function fund(wallets: string[]) {
+  console.log("preparing tx");
   let txDef = lucid.newTx();
 
   for (const addr of wallets) {
+    console.log(`adding ${addr} as recipient of tx`);
     txDef = txDef
       .payToAddress(addr, {
         lovelace: toLovelaces(500n),
@@ -53,7 +61,9 @@ async function fund(wallets: string[]) {
 
   const tx = await txDef.complete();
 
+  console.log("signing tx");
   const signed = await tx.sign().complete();
 
+  console.log("submitting tx");
   return signed.submit();
 }

@@ -35,6 +35,6 @@ console.log(`Mint Transactions Split!
     Tx Hash: ${tx}
     Mint Policy ${mint_tx_definition.mintPolicy}
     Owner: ${mint_tx_definition.owner}
-    Holdings Contract: ${mint_tx_definition.owner}
-    Shares Contract: ${mint_tx_definition.owner}
+    Holdings Contract: ${mint_tx_definition.holdingsAddress}
+    Shares Contract: ${mint_tx_definition.shareholdingAddress}
   `);

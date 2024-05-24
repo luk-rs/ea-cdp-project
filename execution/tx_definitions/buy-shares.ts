@@ -59,9 +59,7 @@ export async function draft_buyShares(buyParams: draftParameters) {
 
   const buyer_addr = lucid
     .selectWalletFromPrivateKey(await Deno.readTextFile(skWallet(buyer)))
-    .utils.getAddressDetails(
-      await Deno.readTextFile(pkWallet("share_holder_1"))
-    );
+    .utils.getAddressDetails(await Deno.readTextFile(pkWallet(buyer)));
   const buyer_PKH = buyer_addr.paymentCredential?.hash;
 
   const owner_hotel_utxos = await lucid.utxosAtWithUnit(
@@ -108,6 +106,7 @@ export async function draft_buyShares(buyParams: draftParameters) {
 
   const redeemer = Data.to(redeemerContent);
 
+  console.log("preparing tx");
   const tx = await lucid
     .newTx()
     .collectFrom([...buyer_utxos, ...owner_shares_utxos], redeemer)
@@ -142,11 +141,13 @@ export async function draft_buyShares(buyParams: draftParameters) {
       },
     });
 
+  console.log("signing tx");
   const signed = await tx.sign().complete();
 
+  console.log("submitting tx");
   return {
     tx: signed.submit(),
-    buyer,
+    buyer: buyer_addr.address.bech32,
     sharesAddress: owner_shareholdingAddress,
   };
 }

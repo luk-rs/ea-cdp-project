@@ -1,4 +1,5 @@
 #!/bin/sh
+set -x
 
 # mint ref hotel nft
 # args
